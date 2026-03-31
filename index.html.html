@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monkey DS — Generador de documentación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --green: #1B4D3E;
+    --green-light: #2A6B55;
+    --green-bg: #E8F5EE;
+    --amber: #E8821A;
+    --amber-bg: #FEF3E6;
+    --surface: #FAFAF8;
+    --card: #FFFFFF;
+    --border: #E8E6E0;
+    --border-strong: #D0CEC7;
+    --text: #1A1A18;
+    --text-2: #5A5A55;
+    --text-3: #9A9A90;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .topbar {
+    background: var(--green);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .topbar-logo span {
+    color: var(--amber);
+  }
+
+  .topbar-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .topbar-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 400;
+  }
+
+  /* Layout */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-2);
+    margin-bottom: 2rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--amber);
+    margin-bottom: 1rem;
+  }
+
+  /* Form elements */
+  .form-row { margin-bottom: 1.25rem; }
+  .form-row:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus {
+    border-color: var(--green);
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+  }
+
+  /* Tags */
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .tag {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .tag.active {
+    background: var(--green-bg);
+    color: var(--green);
+    border-color: var(--green);
+  }
+
+  /* Checkboxes */
+  .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--green);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* Button */
+  .btn-generate {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-generate:hover { background: var(--green-light); }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Output */
+  .output-area {
+    display: none;
+    margin-top: 1.5rem;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .output-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .output-actions { display: flex; gap: 8px; }
+
+  .btn-action {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-2);
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-action:hover {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .btn-action.primary {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+  }
+
+  .btn-action.primary:hover { background: var(--green-light); }
+
+  .output-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-family: 'Inter', sans-serif;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 2rem;
+    font-size: 12px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+
+  /* Notice */
+  .notice {
+    background: var(--amber-bg);
+    border: 1px solid #F5C07A;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: #7A4A10;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .notice-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Monkey<span>.</span></div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-subtitle">Generador de documentación de componentes</div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">Documentá un componente</h1>
+  <p class="page-subtitle">Completá los campos y la IA genera la documentación siguiendo la estructura del Monkey DS.</p>
+
+  <div class="notice">
+    <span class="notice-icon">ℹ</span>
+    <span>Esta herramienta usa la API de Claude. Asegurate de que tu equipo tenga acceso a la URL donde esté hosteada.</span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="card-title">Componente</div>
+        <div class="form-row">
+          <label>Nombre</label>
+          <input type="text" id="comp-name" placeholder="Ej: Modal, Toast, InputField..." />
+        </div>
+        <div class="form-row">
+          <label>Descripción breve</label>
+          <textarea id="comp-desc" placeholder="¿Qué hace? ¿Cuándo se usa?"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Elementos anatómicos (uno por línea)</label>
+          <textarea id="comp-anatomy" placeholder="1. Título&#10;2. Descripción&#10;3. Botón de acción&#10;4. Ícono" style="min-height:110px"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Notas / restricciones de uso</label>
+          <textarea id="comp-notes" placeholder="Ej: No se puede usar más de uno por pantalla..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="form-row">
+          <label>Dispositivos disponibles</label>
+          <div class="tag-row" id="device-tags">
+            <span class="tag active" data-val="Mobile">Mobile</span>
+            <span class="tag active" data-val="Desktop">Desktop</span>
+            <span class="tag" data-val="Tablet">Tablet</span>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top: 1.25rem;">
+          <label>Secciones a generar</label>
+          <div class="checkbox-group" style="margin-top: 8px;">
+            <label class="checkbox-item"><input type="checkbox" checked id="s-anatomy"> Anatomía</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-behavior"> Comportamientos</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-specs"> Especificaciones de layout</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-a11y"> Accesibilidad</label>
+            <label class="checkbox-item"><input type="checkbox" id="s-changelog"> ChangeLog</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Tono de escritura</div>
+        <div class="form-row">
+          <label>El output seguirá el estilo del Monkey DS</label>
+          <div class="tag-row">
+            <span class="tag active">Español</span>
+            <span class="tag active">Directo</span>
+            <span class="tag active">Técnico</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btn-gen" onclick="generateDoc()">Generar documentación →</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Generando documentación con Claude...
+  </div>
+
+  <div class="output-area" id="output-area">
+    <div class="output-header">
+      <div class="output-title" id="output-title">Documentación generada</div>
+      <div class="output-actions">
+        <button class="btn-action" onclick="copyOutput()">Copiar texto</button>
+        <button class="btn-action primary" onclick="downloadOutput()">Descargar .md</button>
+      </div>
+    </div>
+    <div class="output-content" id="output-content"></div>
+  </div>
+</div>
+
+<div class="footer">
+  Monkey Design System · © 2025 · Generado con Claude API
+</div>
+
+<script>
+  document.querySelectorAll('#device-tags .tag').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('active'));
+  });
+
+  function getDevices() {
+    const active = [...document.querySelectorAll('#device-tags .tag.active')].map(t => t.dataset.val);
+    return active.length ? active.join(', ') : 'Mobile y Desktop';
+  }
+
+  async function generateDoc() {
+    const name = document.getElementById('comp-name').value.trim();
+    const desc = document.getElementById('comp-desc').value.trim();
+    const anatomy = document.getElementById('comp-anatomy').value.trim();
+    const notes = document.getElementById('comp-notes').value.trim();
+
+    if (!name) {
+      document.getElementById('comp-name').focus();
+      return;
+    }
+
+    const sections = [];
+    if (document.getElementById('s-anatomy').checked) sections.push('Anatomía');
+    if (document.getElementById('s-behavior').checked) sections.push('Comportamientos');
+    if (document.getElementById('s-specs').checked) sections.push('Especificaciones de layout (spacing, tamaños, grid)');
+    if (document.getElementById('s-a11y').checked) sections.push('Accesibilidad (Navegación por teclado + Lector de pantalla con aria-labels específicos)');
+    if (document.getElementById('s-changelog').checked) sections.push('ChangeLog');
+
+    const btn = document.getElementById('btn-gen');
+    btn.disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('output-area').style.display = 'none';
+
+    const prompt = `Sos un experto en design systems. Documentá el componente de UI llamado "${name}" siguiendo EXACTAMENTE esta estructura y estilo de escritura:
+
+CONTEXTO DEL DESIGN SYSTEM (Monkey DS):
+- Tono: directo, en español, imperativo cuando da instrucciones ("Recuerden usar...", "No se puede modificar...")
+- El design system se llama "Monkey"
+- Siempre hay una descripción breve al inicio (1-2 oraciones)
+- Las secciones principales usan títulos: Anatomía, Comportamientos, Accesibilidad
+- En "Comportamientos" los sub-temas van en categorías: Device, Visibilidad, Tamaño, Animación, Posición fija, Uso, Contenido, etc. (según aplique al componente)
+- En "Accesibilidad" siempre hay: "Navegación por teclado" y "Lector de pantalla" con aria-labels específicos y reales para el componente
+- Los elementos anatómicos se numeran
+- Tono técnico pero accesible para diseñadores
+- Usá bullet points dentro de cada sub-sección de comportamientos
+
+DATOS DEL COMPONENTE:
+- Nombre: ${name}
+- Descripción: ${desc || 'Inferir según el nombre del componente'}
+- Elementos anatómicos: ${anatomy || 'Inferir los elementos anatómicos típicos de este componente'}
+- Devices disponibles: ${getDevices()}
+- Notas adicionales: ${notes || 'Ninguna'}
+- Secciones a generar: ${sections.join(', ')}
+
+Generá la documentación completa en markdown. Sé muy específico con los aria-labels. El resultado debe poder copiarse directamente a Notion o Figma.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || '').join('') || 'Error al generar el contenido.';
+
+      document.getElementById('output-content').textContent = text;
+      document.getElementById('output-title').textContent = `Documentación: ${name}`;
+      document.getElementById('output-area').style.display = 'block';
+      document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (e) {
+      document.getElementById('output-content').textContent = 'Error de conexión. Verificá tu conexión a internet e intentá de nuevo.';
+      document.getElementById('output-area').style.display = 'block';
+    }
+
+    btn.disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('output-content').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-action');
+      const original = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = original, 2000);
+    });
+  }
+
+  function downloadOutput() {
+    const name = document.getElementById('comp-name').value.trim() || 'componente';
+    const text = document.getElementById('output-content').textContent;
+    const blob = new Blob([text], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name.replace(/\s+/g, '-').toLowerCase()}-doc.md`;
+    a.click();
+  }
+</script>
+</body>
+</html>
