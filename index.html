@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monkey DS — Generador de documentación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --green: #1B4D3E;
+    --green-light: #2A6B55;
+    --green-bg: #E8F5EE;
+    --amber: #E8821A;
+    --amber-bg: #FEF3E6;
+    --surface: #FAFAF8;
+    --card: #FFFFFF;
+    --border: #E8E6E0;
+    --border-strong: #D0CEC7;
+    --text: #1A1A18;
+    --text-2: #5A5A55;
+    --text-3: #9A9A90;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+  .topbar { background: var(--green); padding: 0 2rem; height: 64px; display: flex; align-items: center; gap: 1rem; }
+  .topbar-logo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; color: #fff; letter-spacing: -0.5px; }
+  .topbar-logo span { color: var(--amber); }
+  .topbar-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
+  .topbar-subtitle { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .page-subtitle { font-size: 14px; color: var(--text-2); margin-bottom: 2rem; }
+
+  /* Mode switcher */
+  .mode-switcher { display: flex; gap: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; width: fit-content; }
+  .mode-btn { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 24px; border: none; background: transparent; color: var(--text-2); cursor: pointer; transition: all 0.15s; border-right: 1px solid var(--border); }
+  .mode-btn:last-child { border-right: none; }
+  .mode-btn.active { background: var(--green); color: #fff; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.25rem; align-items: start; }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+  .card:last-child { margin-bottom: 0; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 1.25rem; }
+
+  .form-row { margin-bottom: 1.25rem; }
+  .form-row:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 13px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; }
+  .hint { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+  input[type="text"], textarea {
+    width: 100%; padding: 10px 14px; font-size: 14px; font-family: 'Inter', sans-serif;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); transition: border-color 0.15s; outline: none;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: var(--green); background: #fff; }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem 1.5rem;
+    text-align: center; cursor: pointer; transition: all 0.15s; background: var(--surface);
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--green); background: var(--green-bg); }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-label { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .upload-hint { font-size: 12px; color: var(--text-3); }
+  .upload-btn-text { color: var(--green); text-decoration: underline; cursor: pointer; }
+
+  .img-preview { margin-top: 1rem; display: none; }
+  .img-preview img { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); max-height: 300px; object-fit: contain; background: #f5f5f0; }
+  .img-remove { margin-top: 8px; font-size: 12px; color: var(--text-3); cursor: pointer; text-decoration: underline; }
+  .img-remove:hover { color: #c0392b; }
+
+  /* Tags */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .tag { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .tag.active { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+  .tag.static { cursor: default; }
+
+  /* Checkboxes */
+  .checkbox-group { display: flex; flex-direction: column; gap: 10px; }
+  .checkbox-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); cursor: pointer; }
+  .checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; flex-shrink: 0; }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Button */
+  .btn-generate {
+    width: 100%; padding: 14px; font-size: 15px; font-weight: 600; font-family: 'Syne', sans-serif;
+    background: var(--green); color: #fff; border: none; border-radius: var(--radius);
+    cursor: pointer; margin-top: 1rem; transition: background 0.15s, transform 0.1s; letter-spacing: 0.01em;
+  }
+  .btn-generate:hover { background: var(--green-light); }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* Output */
+  .output-area { display: none; margin-top: 1.5rem; }
+  .output-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+  .output-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; }
+  .output-actions { display: flex; gap: 8px; }
+  .btn-action {
+    font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius-sm);
+    cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text-2);
+    transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .btn-action:hover { background: var(--surface); border-color: var(--border-strong); color: var(--text); }
+  .btn-action.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-action.primary:hover { background: var(--green-light); }
+
+  .output-content {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem; font-size: 13.5px; line-height: 1.8; color: var(--text);
+    white-space: pre-wrap; font-family: 'Inter', sans-serif; max-height: 620px; overflow-y: auto;
+  }
+
+  /* Loading */
+  .loading { display: none; text-align: center; padding: 2.5rem; color: var(--text-2); font-size: 14px; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Notice */
+  .notice { background: var(--amber-bg); border: 1px solid #F5C07A; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12.5px; color: #7A4A10; margin-bottom: 1.5rem; }
+
+  .footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border); margin-top: 3rem; }
+
+  /* Figma tip */
+  .figma-tip { background: #F0F4FF; border: 1px solid #C7D2F5; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12.5px; color: #3D4F9F; margin-top: 1rem; line-height: 1.6; }
+  .figma-tip strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Monkey<span>.</span></div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-subtitle">Generador de documentación de componentes</div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">Documentá un componente</h1>
+  <p class="page-subtitle">Subí una imagen del componente desde Figma o completá los campos manualmente.</p>
+
+  <div class="notice">
+    Esta herramienta usa la API de Claude para generar documentación siguiendo la estructura del Monkey DS.
+  </div>
+
+  <!-- Mode switcher -->
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btn-mode-image" onclick="setMode('image')">Desde imagen / Figma</button>
+    <button class="mode-btn" id="btn-mode-manual" onclick="setMode('manual')">Manual</button>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: main input -->
+    <div>
+
+      <!-- IMAGE MODE -->
+      <div class="panel active" id="panel-image">
+        <div class="card">
+          <div class="card-title">Imagen del componente</div>
+          <div class="form-row">
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('img-input').click()">
+              <input type="file" id="img-input" accept="image/png,image/jpeg,image/webp" onchange="handleImageUpload(event)" />
+              <div class="upload-icon">🖼</div>
+              <div class="upload-label">Arrastrá una imagen o <span class="upload-btn-text">hacé clic para seleccionar</span></div>
+              <div class="upload-hint">PNG, JPG, WebP · máx. 5MB · Exportá el frame desde Figma como PNG</div>
+            </div>
+            <div class="img-preview" id="img-preview">
+              <img id="preview-img" src="" alt="Preview" />
+              <div class="img-remove" onclick="removeImage()">✕ Quitar imagen</div>
+            </div>
+            <div class="figma-tip">
+              <strong>¿Cómo exportar desde Figma?</strong> Seleccioná el frame del componente → clic derecho → Copy/Paste as → Copy as PNG. Luego pegá directo en esta página, o usá Export (panel derecho) → PNG → Export.
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Nombre del componente (opcional)</label>
+            <input type="text" id="comp-name-img" placeholder="Si lo dejás vacío, la IA lo infiere de la imagen" />
+          </div>
+          <div class="form-row">
+            <label>Descripción o notas adicionales (opcional)</label>
+            <textarea id="comp-desc-img" placeholder="Contexto extra, restricciones de uso, comportamientos específicos..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANUAL MODE -->
+      <div class="panel" id="panel-manual">
+        <div class="card">
+          <div class="card-title">Datos del componente</div>
+          <div class="form-row">
+            <label>Nombre del componente *</label>
+            <input type="text" id="comp-name" placeholder="Ej: Modal, Toast, InputField..." />
+          </div>
+          <div class="form-row">
+            <label>Descripción breve</label>
+            <textarea id="comp-desc" placeholder="¿Qué hace este componente? ¿Cuándo se usa?"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Elementos anatómicos (uno por línea)</label>
+            <textarea id="comp-anatomy" placeholder="1. Título&#10;2. Descripción&#10;3. Botón de acción&#10;4. Ícono de cierre" style="min-height:110px"></textarea>
+            <div class="hint">Si lo dejás vacío la IA los infiere según el tipo de componente.</div>
+          </div>
+          <div class="form-row">
+            <label>Notas / restricciones de uso</label>
+            <textarea id="comp-notes" placeholder="Ej: No se puede usar más de uno por pantalla. Siempre va fijo al bottom..."></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: config -->
+    <div>
+      <div class="card">
+        <div class="card-title">Configuración</div>
+        <div class="form-row">
+          <label>Dispositivos disponibles</label>
+          <div class="tag-row" id="device-tags">
+            <span class="tag active" data-val="Mobile">Mobile</span>
+            <span class="tag active" data-val="Desktop">Desktop</span>
+            <span class="tag" data-val="Tablet">Tablet</span>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:1.25rem">
+          <label>Secciones a generar</label>
+          <div class="checkbox-group" style="margin-top:8px">
+            <label class="checkbox-item"><input type="checkbox" checked id="s-anatomy"> Anatomía</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-behavior"> Comportamientos</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-specs"> Especificaciones de layout</label>
+            <label class="checkbox-item"><input type="checkbox" checked id="s-a11y"> Accesibilidad</label>
+            <label class="checkbox-item"><input type="checkbox" id="s-changelog"> ChangeLog</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Estilo de escritura</div>
+        <div class="form-row">
+          <div class="tag-row">
+            <span class="tag active static">Español</span>
+            <span class="tag active static">Monkey DS</span>
+            <span class="tag active static">Técnico</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="btn-gen" onclick="generateDoc()">Generar documentación →</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Analizando componente y generando documentación...
+  </div>
+
+  <div class="output-area" id="output-area">
+    <div class="output-header">
+      <div class="output-title" id="output-title">Documentación generada</div>
+      <div class="output-actions">
+        <button class="btn-action" onclick="copyOutput()">Copiar texto</button>
+        <button class="btn-action primary" onclick="downloadOutput()">Descargar .md</button>
+      </div>
+    </div>
+    <div class="output-content" id="output-content"></div>
+  </div>
+</div>
+
+<div class="footer">Monkey Design System · © 2025 · Generado con Claude API</div>
+
+<script>
+  let currentMode = 'image';
+  let imageBase64 = null;
+  let imageMimeType = null;
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('panel-image').classList.toggle('active', mode === 'image');
+    document.getElementById('panel-manual').classList.toggle('active', mode === 'manual');
+    document.getElementById('btn-mode-image').classList.toggle('active', mode === 'image');
+    document.getElementById('btn-mode-manual').classList.toggle('active', mode === 'manual');
+  }
+
+  document.querySelectorAll('#device-tags .tag').forEach(t => {
+    t.addEventListener('click', () => { if (!t.classList.contains('static')) t.classList.toggle('active'); });
+  });
+
+  function getDevices() {
+    const active = [...document.querySelectorAll('#device-tags .tag.active:not(.static)')].map(t => t.dataset.val);
+    return active.length ? active.join(', ') : 'Mobile y Desktop';
+  }
+
+  function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('La imagen supera los 5MB. Exportala con menor resolución desde Figma.'); return; }
+    imageMimeType = file.type || 'image/png';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      imageBase64 = ev.target.result.split(',')[1];
+      document.getElementById('preview-img').src = ev.target.result;
+      document.getElementById('img-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage() {
+    imageBase64 = null; imageMimeType = null;
+    document.getElementById('img-input').value = '';
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+  }
+
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { alert('La imagen supera los 5MB.'); return; }
+    imageMimeType = file.type;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      imageBase64 = ev.target.result.split(',')[1];
+      document.getElementById('preview-img').src = ev.target.result;
+      document.getElementById('img-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Paste support
+  document.addEventListener('paste', e => {
+    if (currentMode !== 'image') return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) handleImageUpload({ target: { files: [file] } });
+        break;
+      }
+    }
+  });
+
+  function getSections() {
+    const s = [];
+    if (document.getElementById('s-anatomy').checked) s.push('Anatomía');
+    if (document.getElementById('s-behavior').checked) s.push('Comportamientos');
+    if (document.getElementById('s-specs').checked) s.push('Especificaciones de layout (spacing, tamaños, grid)');
+    if (document.getElementById('s-a11y').checked) s.push('Accesibilidad (Navegación por teclado + Lector de pantalla con aria-labels específicos)');
+    if (document.getElementById('s-changelog').checked) s.push('ChangeLog');
+    return s;
+  }
+
+  const DS_CONTEXT = `CONTEXTO DEL DESIGN SYSTEM (Monkey DS):
+- Tono: directo, en español, imperativo cuando da instrucciones ("Recuerden usar...", "No se puede modificar...", "Debe construirse con un <button>")
+- Design system: Monkey
+- Descripción breve al inicio (1-2 oraciones)
+- Secciones principales con títulos: Anatomía, Comportamientos, Accesibilidad
+- En "Comportamientos": sub-categorías en grilla (Device, Visibilidad, Tamaño, Animación, Posición fija, Uso, Contenido, etc. según aplique)
+- En "Accesibilidad": siempre incluir "Navegación por teclado" y "Lector de pantalla" con aria-labels específicos y reales del componente
+- Elementos anatómicos numerados
+- Bullet points dentro de cada sub-sección de comportamientos
+- Output en markdown listo para Notion o Figma`;
+
+  async function generateDoc() {
+    const sections = getSections();
+    const btn = document.getElementById('btn-gen');
+    let messages;
+
+    if (currentMode === 'image') {
+      if (!imageBase64) { alert('Por favor subí una imagen del componente antes de generar.'); return; }
+      const name = document.getElementById('comp-name-img').value.trim();
+      const desc = document.getElementById('comp-desc-img').value.trim();
+
+      const textPrompt = `Sos un experto en design systems. Analizá visualmente la imagen de este componente de UI y documentalo siguiendo EXACTAMENTE la estructura del Monkey DS.
+
+${DS_CONTEXT}
+
+INSTRUCCIONES PARA EL ANÁLISIS VISUAL:
+- Identificá todos los elementos visuales del componente (iconos, textos, botones, contenedores, estados)
+- Numeralos como elementos anatómicos según lo que realmente veas
+- Inferí los comportamientos según la estructura visual (tamaños, alineaciones, espaciados)
+- Generá aria-labels específicos y reales para los elementos interactivos que veas
+
+DATOS ADICIONALES:
+- Nombre del componente: ${name || 'Inferir desde la imagen'}
+- Notas del diseñador: ${desc || 'Ninguna'}
+- Devices disponibles: ${getDevices()}
+- Secciones a generar: ${sections.join(', ')}`;
+
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: imageMimeType, data: imageBase64 } },
+          { type: 'text', text: textPrompt }
+        ]
+      }];
+
+    } else {
+      const name = document.getElementById('comp-name').value.trim();
+      if (!name) { document.getElementById('comp-name').focus(); return; }
+      const desc = document.getElementById('comp-desc').value.trim();
+      const anatomy = document.getElementById('comp-anatomy').value.trim();
+      const notes = document.getElementById('comp-notes').value.trim();
+
+      messages = [{
+        role: 'user',
+        content: `Sos un experto en design systems. Documentá el componente "${name}" siguiendo EXACTAMENTE la estructura del Monkey DS.
+
+${DS_CONTEXT}
+
+DATOS DEL COMPONENTE:
+- Nombre: ${name}
+- Descripción: ${desc || 'Inferir según nombre'}
+- Elementos anatómicos: ${anatomy || 'Inferir los típicos de este componente'}
+- Devices: ${getDevices()}
+- Notas / restricciones: ${notes || 'Ninguna'}
+- Secciones a generar: ${sections.join(', ')}`
+      }];
+    }
+
+    btn.disabled = true;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('output-area').style.display = 'none';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1800, messages })
+      });
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || '').join('') || 'Error al generar el contenido. Intentá de nuevo.';
+      const compName = currentMode === 'image'
+        ? (document.getElementById('comp-name-img').value.trim() || 'Componente')
+        : document.getElementById('comp-name').value.trim();
+      document.getElementById('output-content').textContent = text;
+      document.getElementById('output-title').textContent = 'Documentación: ' + compName;
+      document.getElementById('output-area').style.display = 'block';
+      document.getElementById('output-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      document.getElementById('output-content').textContent = 'Error de conexión. Verificá tu internet e intentá de nuevo.';
+      document.getElementById('output-area').style.display = 'block';
+    }
+
+    btn.disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+
+  function copyOutput() {
+    navigator.clipboard.writeText(document.getElementById('output-content').textContent).then(() => {
+      const btn = document.querySelector('.btn-action');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+
+  function downloadOutput() {
+    const name = currentMode === 'image'
+      ? (document.getElementById('comp-name-img').value.trim() || 'componente')
+      : (document.getElementById('comp-name').value.trim() || 'componente');
+    const text = document.getElementById('output-content').textContent;
+    const blob = new Blob([text], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name.replace(/\s+/g, '-').toLowerCase() + '-doc.md';
+    a.click();
+  }
+</script>
+</body>
+</html>
